@@ -12,7 +12,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.productivity.testwind"
+        applicationId = "com.productivity.testwind2"
         minSdk = 28
         targetSdk = 36
         versionCode = 16

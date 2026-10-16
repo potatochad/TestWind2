@@ -30,25 +30,6 @@ jobs:
           restore-keys: |
             gradle-
 
-      - name: Wait 600 seconds
-        run: | 
-          sleep 1
-          sleep 2
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
-             
-             
-
 
       - name: Build APK
         run: |
@@ -63,14 +44,6 @@ jobs:
         with:
           name: app-release-${{ github.run_number }}.apk
           path: app/build/outputs/apk/release/app-release.apk
-
-      - name: Wait 600 seconds
-        run: |
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
-          sleep 1
 
 
 
