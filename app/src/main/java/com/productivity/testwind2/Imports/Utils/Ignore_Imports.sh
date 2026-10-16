@@ -1,4 +1,4 @@
-log() { echo "🔹 $*"; }
+log() { echo "🔹 $*"; }  
   
 make_folder() {
   mkdir -p "$1"
