@@ -50,9 +50,9 @@ find_and_source() {
 }
 
 
-KEYSTORE_PASSWORD="12349648123"
-KEY_ALIAS="myKeyAlias"
-KEY_PASSWORD="12342658123"
+KEYSTORE_PASSWORD="12345678123"
+KEY_ALIAS="myKeyAliass"
+KEY_PASSWORD="12345678123"
 KEYSTORE_PATH="$(pwd)/app/keyyStore.keystore"
 
 Create_Keystore() {
