@@ -6,6 +6,7 @@ import com.productivity.testwind2.Imports.Utils.Renames.*
 import com.productivity.testwind2.Imports.Utils.SaveData.*
 import com.productivity.testwind2.Imports.Utils.AppsAndDevice.*
 import com.productivity.testwind2.Imports.Utils.ToX.*
+import com.productivity.testwind2.R
 import android.annotation.SuppressLint
 import android.content.*
 import androidx.compose.runtime.*

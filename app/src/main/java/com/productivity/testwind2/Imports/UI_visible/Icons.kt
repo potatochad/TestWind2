@@ -10,8 +10,10 @@ import com.productivity.testwind2.Imports.Utils.AppsAndDevice.*
 import com.productivity.testwind2.Imports.Utils.NavControl.*
 import com.productivity.testwind2.Imports.Utils.ToX.*
 import com.productivity.testwind2.Imports.Utils.String.*
+import com.productivity.testwind2.R
 import androidx.compose.ui.draw.*
-import androidx.compose.foundation.shape.*import androidx.compose.material3.*
+import androidx.compose.foundation.shape.*
+import androidx.compose.material3.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.runtime.*
 import androidx.compose.animation.*
