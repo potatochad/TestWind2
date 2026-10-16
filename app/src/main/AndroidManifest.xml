@@ -74,7 +74,7 @@
 
 
         <receiver
-            android:name="com.productivity.testwind.Imports.Utils.MyAdminReceiver"
+            android:name="com.productivity.testwind2.Imports.Utils.MyAdminReceiver"
             android:permission="android.permission.BIND_DEVICE_ADMIN"
             android:exported="true">
 

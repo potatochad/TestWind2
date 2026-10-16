@@ -1,0 +1,305 @@
+package com.productivity.testwind2.Imports.UI_visible
+
+import com.productivity.testwind2.Imports.Utils.Log.*
+import com.productivity.testwind2.Imports.Utils.Renames.*
+import com.productivity.testwind2.Imports.Utils.NavControl.*
+import com.productivity.testwind2.Imports.Utils.String.*
+import com.productivity.testwind2.Imports.Utils.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.unit.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.window.*
+import androidx.compose.animation.*
+
+
+/*thumbColor: Color = Color.Unspecified,
+        activeTrackColor: Color = Color.Unspecified,
+        activeTickColor: Color = Color.Unspecified,
+        inactiveTrackColor: Color = Color.Unspecified,
+        inactiveTickColor: Color = Color.Unspecified,
+        disabledThumbColor: Color = Color.Unspecified,
+        disabledActiveTrackColor: Color = Color.Unspecified,
+        disabledActiveTickColor: Color = Color.Unspecified,
+        disabledInactiveTrackColor: Color = Color.Unspecified,
+        disabledInactiveTickColor: Color = Color.Unspecified,
+    ): SliderColors =*/
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BasicSlider(
+	value: Float = 10f,
+    mod: Mod = Mod.space(15, 0),
+    valueRange: ClosedFloatingPointRange<Float> = 0f..100f,
+    enabled: Bool = yes,
+    thumb: ui = {
+        SliderDefaults.Thumb(
+            interactionSource = r { MutableInteractionSource() },
+            thumbSize = DpSize(16.dp, 16.dp),
+			colors = SliderDefaults.colors(
+                thumbColor = gold
+            )
+        )
+    },
+    track: ui_<SliderState> = {
+        SliderDefaults.Track(
+            sliderState = it,
+            modifier = Mod.h(3),
+            thumbTrackGapSize = 0.dp,
+            colors = SliderDefaults.colors(
+                activeTrackColor = gold,
+                inactiveTrackColor = gray,
+                activeTickColor = transparent,
+                inactiveTickColor = transparent,
+            ),
+			drawStopIndicator = null,
+			drawTick = { _, _ -> }
+        )
+    },
+	onChange: Do_<Float>,
+) {
+
+    var sliderPosition by r { mutableFloatStateOf(value) }
+    val interactionSource = r { MutableInteractionSource() }
+
+    Slider(
+        modifier = mod,
+        value = sliderPosition,
+        onValueChange = {
+            sliderPosition = it
+            onChange(it)
+        },
+        interactionSource = interactionSource,
+        valueRange = valueRange,
+        enabled = enabled,
+        track = {
+            track(it)
+        },
+        thumb = {
+            thumb()
+        }
+    )
+
+}
+
+@Composable
+fun click(x: UI, Do: Do) {
+	Box(Mod.click{Do()}){
+		x()
+	}
+}
+
+
+@Composable
+fun SwitchBtn(
+    checked: Bool,
+	mod: Mod = Mod,
+    onCheckedChange: Do_<Bool>,
+) {
+	Row{
+	ComposeCanBeTiny {
+		Switch(
+        checked = checked,
+		modifier = Mod.s(20),
+        onCheckedChange = onCheckedChange,
+        colors = SwitchDefaults.colors(
+			checkedThumbColor = white,
+			checkedTrackColor = gold,
+			uncheckedThumbColor = white, 
+			uncheckedTrackColor = gray,
+			checkedBorderColor = gray,     
+			uncheckedBorderColor = gray,
+        )
+    )
+	}
+	}
+}
+
+
+
+@Composable
+fun CheckRow(
+	txt: Str="",
+	isChecked: mStateBool,
+	EndUI: ui_<Bool> = { _ -> }
+) {
+	LazzyRow{
+		LazzyRow(Mod.click { isChecked.it = !isChecked.it }, 0) {
+			Checkbox(
+				checked = isChecked.it,
+				onCheckedChange = { isChecked.it = it },
+				colors = CheckboxDefaults.colors(
+					checkedColor = gold,
+					uncheckedColor = gray,
+					checkmarkColor = white
+				)
+			)
+			move(5)
+			Text(txt)
+			EndUI(isChecked.it)
+		}
+	}
+}
+
+@Composable
+fun CheckCircle(
+    index: Int,
+    selectedIndex: mState_<Int>,
+) {
+	Box(
+		Mod.s(15)
+	) {
+		RadioButton(
+			selected = selectedIndex.value == index,
+			onClick = { set(selectedIndex, index) },
+			colors = RadioButtonDefaults.colors(
+				selectedColor = lightBlue,
+				unselectedColor = gray
+			),
+			modifier = Mod.scale(0.85f)
+		)
+	}
+	move(w=8)
+}
+
+
+
+@Composable
+fun Ctext(
+	text: Any,
+	mod: Mod = Mod,
+	animate: Bool = no,
+	selected: Bool = yes,
+	Do: Do={},
+) {
+	Text(
+		text = if (selected) { UIStr(text).gold() } else { UIStr(text).gray() },
+		modifier = mod.click(animate) {
+			Do()
+		},
+		maxLines = 1, 
+	)
+}
+
+
+
+@Composable
+fun Btn(
+    text: ui,
+    mod: Mod = Mod,
+    onClick: Do = {},
+) {
+    Button(
+        onClick = onClick, 
+        modifier = mod,
+        colors = ButtonDefaults.buttonColors(
+             containerColor = faded(gray, 0.2f)
+        ),
+        border = BorderStroke(1.dp, gray),
+    ) {
+        text()
+    }
+}
+
+@Composable
+fun Btn(
+    text: Str,
+    mod: Mod = Mod,
+    onClick: Do = {},
+) {
+   Button(
+        onClick = onClick, 
+        modifier = mod,
+        colors = ButtonDefaults.buttonColors(
+             containerColor = faded(gray, 0.2f)
+        ),
+        border = BorderStroke(1.dp, gray),
+    ) {
+        Text(text)
+   }
+}
+
+@Composable
+fun BtnFloating55555(
+	Do: Do = { Vlog("clicked btn") },
+) {
+	if (!AppNavUrlChanged){
+    Popup(
+        alignment = Alignment.BottomEnd,
+    ) {
+        Box(
+            modifier = Mod.space(32),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+			Box(
+				Mod.space(5)
+				.background(faded(Color.Gray, 0.2f))
+				.border(width = 1.dp, color = gray)
+				.round(12)
+				.click {
+					Do()
+				}
+			){
+				Icon(
+					icon = Icons.Default.Add,
+					size = 30,
+					color = gold
+				)
+			}
+        }
+    }
+	}
+}
+
+@Composable
+fun BtnFloating(
+    Do: Do = { Vlog("clicked btn") },
+) {
+    val imeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+
+    Popup(alignment = Alignment.BottomEnd) {
+        AnimatedVisibility(
+            visible = !imeVisible && !AppNavUrlChanged,
+            enter = fadeIn() + scaleIn(),
+            exit = fadeOut() + scaleOut()
+        ) {
+            Box(
+                modifier = Mod.space(32),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                Box(
+                    Mod
+						.clip(RoundedCornerShape(12.dp))
+                        .background(cardColor.darker(0.1))
+						.space(12)
+                        .click { Do() }
+                ) {
+                    Icon(
+                        icon = Icons.Default.Add,
+                        size = 30,
+                        color = gold
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+
+
+

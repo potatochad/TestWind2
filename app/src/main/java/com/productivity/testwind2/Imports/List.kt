@@ -1,0 +1,160 @@
+package com.productivity.testwind2.Imports
+
+import com.productivity.testwind2.Imports.Utils.Renames.*
+import com.productivity.testwind2.Imports.Utils.SaveData.*
+import com.productivity.testwind2.Imports.Utils.AppsAndDevice.*
+import com.productivity.testwind2.Imports.Utils.String.*
+import androidx.compose.ui.graphics.*
+import com.productivity.testwind2.*
+import kotlin.collections.*
+import androidx.compose.runtime.Composable
+import android.content.Intent
+import android.content.pm.*
+import kotlin.reflect.*
+
+fun UIStrBuilder.correctStr(text: Str, correctUntil: Int) {
+    for (i in text.indices) {
+        if (i < correctUntil) {
+			text.bold().color(Color.Green)
+        } else {
+            add(text[i])
+        }
+    }
+}
+
+fun getApps(): List<ResolveInfo> {
+    val pm = App.packageManager
+    val launchIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+    return pm.queryIntentActivities(launchIntent, 0).abcOrder()
+}
+fun List<ResolveInfo>.abcOrder(): List<ResolveInfo> {
+    val pm = App.packageManager
+    return this.sortedWith(compareBy { it.loadLabel(pm).toString().lowercase() })
+}
+
+inline fun <T> MutableList<T>.each(
+    block: MutableList<T>.(T) -> Unit
+) {
+    var i = 0
+    while (i < this.size) {
+        val item = this[i]
+        this.block(item)
+        i++
+    }
+}
+
+@Composable
+inline fun <T> List<T>.findUI(
+    match: (T) -> Bool,
+    crossinline uiBlock: @Composable MutableList<T>.(T) -> Unit
+) {
+    this.filter(match)
+        .toMutableList()
+        .each { uiBlock(it) }
+}
+
+fun <T : Any> List<T>.find(id: Str = "", match: (T) -> Bool = { yes }): T? {
+    return if (id.isEmpty()) firstOrNull(match)
+    else firstOrNull { item ->
+        item::class.members.firstOrNull { it.name == "id" }
+            ?.let { (it as? KProperty1<T, *>)?.get(item) } == id
+    }
+}
+
+fun <T> getId(it: T): Str {
+    return try {
+        val idField = it!!::class.members.firstOrNull { m -> m.name == "id" }
+        idField?.call(it)?.toString() ?: ""
+    } catch (e: Exception) {
+        ""
+    }
+}
+
+
+inline fun <T, R> Iterable<T>.change(transform: (T) -> R): List<R> {
+    return this.map(transform)
+}
+
+
+fun <T> LoadItemFromId(
+	id: Str,
+	list: List<T>,
+	onFound: (T) -> Unit
+) {
+	if (!id.empty) {
+		val item = list.find { 
+			getId(it) == id
+		}
+		if (item != null) {
+			onFound(item)
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+fun CopyTsk.goodStr(): Int {
+    val n = minOf(txt.size, input.size)
+    for (i in 0 until n) {
+        if (txt[i] != input[i]) return i
+    }
+    return n
+}
+
+fun CopyTsk.done(): Bool {
+    return doneTimes >= maxDone
+}
+fun DoTsk.done(): Bool {
+    return didTime >= doneTime
+}
+
+
+fun WebWord.edit(block: WebWord.() -> Unit) {
+	Bar.webWord.edit(this, block)
+}
+fun AppTsk.edit(block: AppTsk.() -> Unit) {
+	Bar.apps.edit(this, block)
+}
+fun CopyTsk.edit(block: CopyTsk.() -> Unit) {
+    Bar.copyTsk.edit(this, block)
+}
+fun GeoCircle.edit(block: GeoCircle.() -> Unit) {
+	Bar.privacyGeo.edit(this, block)
+}
+fun DoTsk.edit(block: DoTsk.() -> Unit) {
+	Bar.doTsk.edit(this, block)
+}
+
+
+fun <T> MutableList<T>.delete(item: T) {
+    remove(item)
+}
+
+
+fun DoTsk.delete() {
+	Bar.doTsk.remove(this)
+}
+fun WebWord.delete() {
+	Bar.webWord.remove(this)
+}
+
+
+val DoTsk.timeLeft: Int
+    get() = this.doneTime - this.didTime
+
+
+
+
+
+
+
+

@@ -1,0 +1,687 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
+package com.productivity.testwind2.Imports.UI_visible
+
+import com.productivity.testwind2.Imports.Utils.Renames.*
+import com.productivity.testwind2.Imports.Utils.SaveData.*
+import com.productivity.testwind2.Imports.Utils.AppsAndDevice.*
+import com.productivity.testwind2.Imports.Utils.NavControl.*
+import com.productivity.testwind2.Imports.Utils.ToX.*
+import com.productivity.testwind2.Imports.Utils.String.*
+import androidx.compose.ui.draw.*
+import androidx.compose.material3.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.runtime.*
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.ui.graphics.Color
+import kotlinx.coroutines.*
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.window.Popup
+import kotlin.collections.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.background
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.*
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import com.productivity.testwind2.*
+import androidx.compose.foundation.gestures.*
+import androidx.compose.ui.input.pointer.*
+import com.productivity.testwind2.Imports.Utils.*
+import androidx.activity.compose.*
+import com.google.android.gms.maps.model.*
+import com.google.maps.android.compose.*
+import kotlin.math.*
+import androidx.compose.ui.zIndex
+
+
+
+
+@Composable
+fun LazyTheme(content: ui) {
+    val appColorScheme = darkColorScheme(
+        background = black,
+        onBackground = white,
+        // surface = Color.Black,
+        onSurface = white,
+        // primary = Color.Black, ✅️
+        onPrimary = white,
+    )
+    MaterialTheme(
+        colorScheme = appColorScheme,
+        content = content
+    )
+}
+
+
+
+@Composable
+fun LazyImage(
+    source: Any?,
+    mod: Mod = Mod
+) {
+	var modifier = Mod.s(34).space(5).mix(new = mod)
+    val contentDescription = "boring"
+    when (source) {
+        is Painter -> Image(painter = source, contentDescription = contentDescription, modifier = modifier)
+        is Drawable -> Image(painter = rememberDrawablePainter(source), contentDescription = contentDescription, modifier = modifier)
+        is Bitmap -> Image(painter = BitmapPainter(source.asImageBitmap()), contentDescription = contentDescription, modifier = modifier)
+        is ImageBitmap -> Image(painter = BitmapPainter(source), contentDescription = contentDescription, modifier = modifier)
+        else -> { /* do nothing if null/unsupported */ }
+    }
+}
+
+
+
+@Composable
+fun <T> LazzyList(
+    data: List<T>,
+    modifier: Mod = Mod.h(200),
+    content: @Composable (T, Int) -> Unit,
+) {
+    var data2 by r(data)
+
+    Column(modifier.scroll().maxW()) {
+        data2.forEachIndexed { index, item ->
+            key(item.hashCode()) {
+                content(item, index)
+            }
+        }
+    }
+}
+
+
+
+@Composable
+fun LazyPullToRefresh(
+    isRefreshing: Bool,
+    onRefresh: Wait,
+    ui: ui
+) {
+    var offsetY by r(0f)
+    val maxPull = 200f
+    val animatedOffset by animateFloatAsState(targetValue = offsetY)
+    val coroutineScope = rememberCoroutineScope()
+
+    Box(
+        Mod.maxS().pointerInput(Unit) {
+			detectVerticalDragGestures(
+				onVerticalDrag = { change, dragAmount ->
+					offsetY = (offsetY + dragAmount).coerceIn(0f, maxPull)
+				},
+				onDragEnd = {
+					if (offsetY >= maxPull) {
+						offsetY = 0f
+						Do { onRefresh() }
+					} else {
+						offsetY = 0f
+					}
+				}
+			)
+		}
+    ) {
+		Popup(
+			alignment = Alignment.TopCenter
+		) {
+			Box(
+				Mod.offset { 
+					IntOffset(0, animatedOffset.roundToInt()) 
+				}.cardColor()
+			){
+				if (isRefreshing || offsetY > 0f) {
+					CircularProgressIndicator(
+						Mod.padding(top = 16.dp),
+						strokeWidth = 4.dp
+					)
+				}
+			}
+		}
+
+        Box {
+            ui()
+        }
+    }
+}
+
+
+
+@Composable
+fun LazySlider(
+    min: Float = 1f,
+    max: Float = 200_000f,
+    linear: Bool = no,
+    circleS: Float = 15f,
+    value: mState_<Float> = mState(min),
+    onChange: Do_<Float>,
+) {
+    var sliderPos by remember(value.it, linear, min, max) { mState(
+            if (linear) {
+				((value.it - min) / (max - min)).coerceIn(0f, 1f)
+			} else {
+				((ln(value.it / min)) / ln(max / min)).coerceIn(0f, 1f)
+			}
+        )
+    }
+
+    BasicSlider(
+        value = sliderPos,
+        valueRange = 0f..1f,
+    ) {
+		sliderPos = it
+		val newValue = if (linear) {
+			min + (max - min) * sliderPos
+		} else {
+			min * (max / min).pow(sliderPos)
+		}
+		value.it = it
+        onChange(newValue)
+    }
+}
+
+
+ 
+@Composable
+fun LazyLine(
+    show: Bool = yes,
+    color: Color = Color(0xFFFFD700),
+    thickness: Dp = 1.dp,
+    MoveY: Int = 0,
+    spaceH: Dp = 0.dp,
+    width: Dp = Dp.Unspecified,
+  ) {
+    if (!show) return
+
+    Divider(
+        color = color,
+        thickness = thickness,
+        modifier = Mod
+            .offset(y = MoveY.dp)
+            .space(spaceH, 0)
+            .then(if (width != Dp.Unspecified) Modifier.width(width) else Modifier)
+    )
+}
+
+
+  
+@Composable
+fun LazzyRow(
+    mod: Mod = Mod,
+    space: Any = 0,
+	ui: uiRow,
+) {
+	var baseMod = Mod.maxW().space(space)
+	
+    Row(
+        baseMod.mix(new = mod),
+        horizontalArrangement = AutoHorizontalArrangement(mod),
+        verticalAlignment = AutoVerticalAlignment(mod),
+	) {
+        ui()
+    }
+}
+
+@Composable
+fun LazzyColumn(
+    mod: Mod = Mod,
+    ui: uiColumn,
+) {
+    Column(
+        modifier = Mod.maxW().mix(new = mod),
+        verticalArrangement = AutoVerticalArrangement(mod),
+        horizontalAlignment = AutoHorizontalAlignment(mod),
+    ) {
+        ui()
+    }
+}
+
+
+
+@Composable
+fun LazyCard(
+    corners: Int = 16,
+    modCard: Mod = Mod.space(8, 10).maxW(),
+	modUI: Mod = Mod.space(
+		start = 16,
+		end = 16,
+		bottom = 16,
+		top = 13,
+	),
+    ui: ui,
+) {
+    Card(
+        modifier = modCard.shadow(2.dp).round(corners),
+        colors = CardDefaults.cardColors(cardColor),
+    ) {
+        Column(modUI) {
+            ui()
+        }
+    }
+}
+
+
+
+@Stable
+@Composable
+fun LazyMore(
+    title: Any = "Show more",
+	initiallyExpanded: Bool = no,
+    ui: ui
+) {
+    var expanded by r(initiallyExpanded)
+    val rotation by animateFloatAsState(targetValue = if (expanded) 90f else 0f)
+
+    Column {
+        LazzyRow(Mod.maxW().clickable { expanded = !expanded }.space(8).centerY) {
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = if (expanded) "Show less" else "Show more",
+                modifier = Mod.rotate(rotation),
+            )
+            move(8)
+            Text(toUIStr(title))
+        }
+
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically(
+                animationSpec = tween(durationMillis = 400),
+                expandFrom = Alignment.Top
+            ),
+            exit = shrinkVertically(
+                animationSpec = tween(durationMillis = 300),
+                shrinkTowards = Alignment.Top
+            )
+        ) {
+            Column {
+                ui()
+            }
+        }
+    }
+}
+
+//endregion
+
+
+//region SCREENS
+
+
+@Composable
+fun LazyItem(
+    title: Str,
+	modUI: Mod = Mod.space(2.5, 0).space(end=12),
+    icon: ui,
+	
+	topPadding: Any = 7,
+	bottomPadding: Any = 8,
+	
+	onClick: Do? = null,
+	endUI: uiRow = {},
+) {
+	LazyCard(
+		corners = 12,
+		modCard = Mod.space(
+			top = topPadding,
+			bottom = bottomPadding,
+			start = 8,
+			end = 8,
+		).maxW().clickable(enabled = onClick != null) { onClick?.invoke() },
+		modUI = modUI,
+	){
+		LazzyRow(space=4){
+			icon()
+			move(6)
+
+			Row(Mod.weight(1f)){
+				Text(title.bold())
+			}
+				
+			endUI()
+		}
+	}
+}
+
+@Composable
+fun LazyHeader(
+    ui: uiRow,
+    onBackIcon: Do = { navBack() },
+    backIcon: Bool = yes,
+	
+    mod: Mod = Mod,
+
+    divider: Bool = yes,
+
+    h: Int = 100,
+) {
+	var clickedBack by r(no)
+
+    Column(mod) {
+        move(h = StatusBarHeight()/3)
+
+        LazzyRow(
+            Mod.maxW().black().space(0, 12).h(h),
+        ) {
+            if (backIcon) {
+				move(5)
+                Icon.Back {
+					//!! Stops the crashing while navigating
+					if (!clickedBack) {
+						clickedBack = yes
+						onBackIcon()
+					}
+				}
+				move(8)
+            }
+
+			LazzyRow(Mod.weight(1f)) { ui() }
+		}
+
+		if (divider) LazyLine(color = gray)
+    }
+}
+
+@Composable
+fun LazyScreen(
+	txt: Str = "Hi",
+    top: uiRow = { Text("$txt") },
+	
+    onBackIcon: Do = { navBack() },
+    backIcon: Bool = yes,
+	
+	scroll: Bool = yes,
+    
+    divider: Bool = yes,
+    dividerP: Bool = yes,
+
+    topH: Int = 44,
+    UI: ui,
+) {
+    Column(Mod.black()) {
+        LazyHeader(top, onBackIcon, backIcon, Mod.zIndex(1f), divider, topH)
+        Column(Mod.black().Yscroll(scroll = scroll)) {
+			if (dividerP) move(10)
+			/* !! Column madness helps avoid scroll crash */
+			Column { UI() }
+			Box(Mod.s(350).transparent())
+        }
+    }
+}
+
+
+
+//endregion
+
+
+//region LAZY POPUP
+
+@Composable
+fun LazyBigPopup(
+    show: mStateBool,
+	title: Str = "Title",
+	onOk: Do = {},
+	onCancel: Do = {},
+	onDismiss: Do = { show.it = no },
+	backhandler: Do = {}, 
+	mod: Mod = Mod.w(350).h(560),
+    ui: ui,
+) {   
+    if (!show.it) return
+
+	BackHandler {
+        backhandler()
+		onDismiss()
+		show.it = no
+	}
+	
+    Popup {
+		Box(Mod.maxS().center().background(faded(Color.Black)).pointerInput(Unit) {
+            detectTapGestures {
+                onDismiss()
+				show.it = no
+			}
+		}){
+			Column(
+				mod.round(12).background(Color.DarkGray).click(no){},
+			) {
+				LazzyRow(Mod.centerX, space = 8) {
+					Text(title.size(18))
+				}
+				Box(Mod.weight(1f)) { 
+					ui()
+				}
+				
+					
+				End(Mod.space(bottom = 10, end = 16)) {
+						Ctext("CANCEL"){
+							onCancel()
+							onDismiss()
+							show.it = no
+						}
+						move(50)
+						Ctext("OK"){
+							onOk()
+							onDismiss()
+							show.it = no
+						}
+					}
+			}
+		}
+    }
+}
+
+@Composable
+fun LazyPopup(
+    show: mState_<Bool>,
+    title: Str = "Info",
+	msg: Str = "",
+    showCancel: Bool = yes,
+    showConfirm: Bool = yes,
+    onConfirm: Do = {},
+    onCancel: Do = {},
+	onDismiss: Do = {},
+	onClose: Do = {},
+	ui: ui? = null,
+) {
+    if (!show.it) return
+
+	fun HidePop(){
+		onClose()
+		hide(show)
+	}
+	
+
+    AlertDialog(
+        onDismissRequest = {
+            onDismiss()
+			HidePop()
+        },
+        title = { Text(title) },
+        text = {
+			Column{
+				ui?.invoke() ?: Text(msg)
+			}
+        },
+        confirmButton = {
+            if (showConfirm) {
+				move(15)
+                Ctext("OK"){
+					wait {
+						onConfirm()
+						HidePop()
+					}
+                }
+            }
+        },
+        dismissButton = if (showCancel) {
+            {
+				Ctext("Cancel"){
+					wait {
+						onCancel()
+						HidePop()
+					}
+                }
+            }
+        } else null
+    )
+}
+
+
+
+
+var menu by mState(no)
+@Composable
+fun LazyMenu(
+    onDismiss: Do? = null,
+    ui: ui,
+) {
+    val visible = r(yes)
+    val internalVisible = r(no)
+
+    // Trigger showing/hiding Popup
+    RunOnce(menu) {
+        if (menu) {
+            visible.it = yes
+            delay(16)
+            internalVisible.it = yes
+        } else {
+            internalVisible.it = no
+            delay(200)
+            visible.it = no
+        }
+    }
+
+    if (!visible.it) return
+
+    // Slide offset
+    val offsetX by animateDpAsState(
+        targetValue = if (internalVisible.it) 0.dp else -AppW/2,
+        animationSpec = tween(durationMillis = 200),
+        label = "MenuSlide"
+    )
+
+    // Background fade
+    val backgroundAlpha by animateFloatAsState(
+        targetValue = if (internalVisible.it) 0.4f else 0f,
+        animationSpec = tween(durationMillis = 200),
+        label = "Fade"
+    )
+
+    Popup(
+        alignment = Alignment.TopStart,
+        onDismissRequest = {
+            onDismiss?.invoke()
+            menu = no
+        }
+    ) {
+        Box( Mod.maxS()
+                .background(faded(Color.Black, backgroundAlpha))
+                .clickable(
+                    indication = null,
+                    interactionSource = r { MutableInteractionSource() }
+                ) {
+                    onDismiss?.invoke()
+                    menu = no
+                }
+        )
+
+        Box( Mod.offset { IntOffset(offsetX.roundToPx(), 0) }
+                .w(AppW / 2 + 30.dp)
+                .maxH()
+                .background(darkGray)
+        ) {
+            ui()
+        }
+    }
+}
+
+
+
+
+
+
+@Composable
+fun LazyMaps(
+    startZoom: Float = 15f,
+	id: Int = 1,
+	mapClick: Do2_<LatLng, CameraPositionState> = { _, _ -> },
+	mapLongClick: Do_<LatLng> = { _ -> },
+	ui: ui = {},
+) {
+	var mapType by synch(
+		MapType.valueOf(Bar.savedMapType)
+	) {
+		Bar.savedMapType = it.name
+	}
+	
+    val camera = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(Bar.userLocation, startZoom)
+    }
+
+    Box(Mod.maxS()) {
+        GoogleMap(
+            modifier = Mod.maxS(),
+            cameraPositionState = camera,
+            properties = MapProperties(
+                isMyLocationEnabled = yes,
+                mapType = mapType,
+            ),
+			onMapClick = {
+				mapClick(it, camera)
+			},
+			onMapLongClick = {
+				mapLongClick(it)
+			},
+			onPOIClick = {},
+			uiSettings = MapUiSettings(
+				zoomControlsEnabled = no
+			),
+        ) {
+			ui()
+		}
+
+        Text(
+            "map".bold().darkGray(),
+            Mod.align(Alignment.TopEnd)
+                .space(top = 12, end = 64)
+                .background(faded(white, 0.7f))
+                .click {
+					mapType =
+                        if (mapType == MapType.NORMAL)
+                            MapType.SATELLITE
+                        else
+                            MapType.NORMAL
+                }.space(8, 6)
+        )
+    }
+}
+
+
+
+
+
+
+
+          
+
+
+
+
+
+
+
+
+
+
+
+          

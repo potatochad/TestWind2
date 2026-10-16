@@ -1,0 +1,463 @@
+package com.productivity.testwind2.Imports.Utils
+
+import com.productivity.testwind2.Imports.Utils.Log.*
+import com.productivity.testwind2.Imports.Utils.Renames.*
+import com.productivity.testwind2.Imports.Utils.AppsAndDevice.*
+import timber.log.Timber
+import android.app.*
+import androidx.core.app.*
+import android.os.*
+import android.content.*
+import android.net.Uri
+import kotlin.collections.*
+import android.content.Intent
+import android.content.pm.*
+import androidx.core.content.*
+import android.net.*
+import android.*
+import android.provider.*
+import android.app.admin.DevicePolicyManager
+import android.content.Context
+import android.app.admin.DeviceAdminReceiver
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.view.accessibility.AccessibilityManager
+
+
+
+class MyAdminReceiver : DeviceAdminReceiver()
+	
+
+object Permission {
+    val writeSecureSettings = "android.permission.WRITE_SECURE_SETTINGS"
+	val systemAlertWindow = "android.permission.SYSTEM_ALERT_WINDOW"
+
+    private fun getAndDo(permissionStr: Str, onGranted: Do): Bool {
+        return if (ContextCompat.checkSelfPermission(App, permissionStr) == PackageManager.PERMISSION_GRANTED) {
+            onGranted()
+            true // permission already granted
+        } else {
+            permission.launch(permissionStr) // request permission
+            false // permission not granted yet
+        }
+    }
+    private fun check(permissionStr: Str, onGranted: Do): Bool {
+        return if (
+            ContextCompat.checkSelfPermission(
+                App,
+                permissionStr
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            onGranted()
+            true
+        } else {
+            false
+        }
+    }
+
+    fun notification(onGranted: Do={}) = getAndDo(Manifest.permission.POST_NOTIFICATIONS, onGranted)
+	fun camera(onGranted: Do={}) = getAndDo(Manifest.permission.CAMERA, onGranted)
+    fun locationFine(onGranted: Do={}) = getAndDo(Manifest.permission.ACCESS_FINE_LOCATION, onGranted)
+    fun locationCoarse(onGranted: Do={}) = getAndDo(Manifest.permission.ACCESS_COARSE_LOCATION, onGranted)
+    fun readStorage(onGranted: Do={}) = getAndDo(Manifest.permission.READ_EXTERNAL_STORAGE, onGranted)
+    fun writeStorage(onGranted: Do={}) = getAndDo(Manifest.permission.WRITE_EXTERNAL_STORAGE, onGranted)
+    fun recordAudio(onGranted: Do={}) = getAndDo(Manifest.permission.RECORD_AUDIO, onGranted)
+    fun readContacts(onGranted: Do={}) = getAndDo(Manifest.permission.READ_CONTACTS, onGranted)
+    fun sendSMS(onGranted: Do={}) = getAndDo(Manifest.permission.SEND_SMS, onGranted)
+    fun callPhone(onGranted: Do={}) = getAndDo(Manifest.permission.CALL_PHONE, onGranted)
+    fun readPhoneState(onGranted: Do={}) = getAndDo(Manifest.permission.READ_PHONE_STATE, onGranted)
+    fun backgroundLocation(onGranted: Do={}) = getAndDo(Manifest.permission.ACCESS_BACKGROUND_LOCATION, onGranted)       
+    fun bodySensors(onGranted: Do={}) = getAndDo(Manifest.permission.BODY_SENSORS, onGranted)
+
+    fun writeSecureSettings(onGranted: Do = {}) = check(writeSecureSettings, onGranted)
+
+	/* NOT TESTEDDD
+	fun location(onGranted: Do = {}): Bool {
+		val fine = ContextCompat.checkSelfPermission(
+			App,
+			Manifest.permission.ACCESS_FINE_LOCATION
+		) == PackageManager.PERMISSION_GRANTED
+		
+		val coarse = ContextCompat.checkSelfPermission(
+			App,
+			Manifest.permission.ACCESS_COARSE_LOCATION
+		) == PackageManager.PERMISSION_GRANTED
+		
+		return if (fine || coarse) {
+			onGranted()
+			true
+		} else {
+			permission.launch(
+				arrayOf(
+					Manifest.permission.ACCESS_FINE_LOCATION,
+					Manifest.permission.ACCESS_COARSE_LOCATION
+				)
+			)
+			false
+		}
+	}
+	*/
+
+	fun appearOnTop(onGranted: Do = {}): Bool {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(App)) {
+			onGranted()
+			return true
+		}
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			val intent = Intent().apply {
+				action = Settings.ACTION_MANAGE_OVERLAY_PERMISSION
+				data = Uri.parse("package:${App.packageName}")
+				flags = Intent.FLAG_ACTIVITY_NEW_TASK
+			}
+			
+			return try {
+				AppActivity.it?.startActivity(intent)
+				false
+			} catch (e: Exception) {
+				false
+			}
+		}
+		
+		// Older Android versions don't have it
+		onGranted()
+		return true
+	}
+
+	fun ignoreOptimizations(onGranted: Do = {}): Bool {
+		val pm = App.getSystemService(Context.POWER_SERVICE) as PowerManager
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && pm.isIgnoringBatteryOptimizations(App.packageName)) {
+			onGranted()
+			return true
+		}
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			val intent = Intent().apply {
+				action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+				data = Uri.parse("package:${App.packageName}")
+				flags = Intent.FLAG_ACTIVITY_NEW_TASK
+			}
+
+			return try {
+				AppActivity.it?.startActivity(intent)
+				false
+			} catch (e: Exception) {
+				false
+			}
+		}
+
+		// Older Android versions dont have it
+		onGranted()
+		return true
+	}
+    fun installApk(onGranted: Do = {}): Bool {
+        val pm = App.packageManager
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+            pm.canRequestPackageInstalls()
+        ) {
+            onGranted()
+            return true
+        }
+
+        try {
+            val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                data = Uri.parse("package:${App.packageName}")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            AppActivity.it?.startActivity(intent)
+        } catch (e: Exception) {
+            Timber.e(e)
+        }
+
+        return false
+	}
+	fun deviceAdmin(onGranted: Do = {}): Bool {
+		val receiver = ComponentName(App, MyAdminReceiver::class.java)
+		val dpm = App.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
+		val isActive = dpm.isAdminActive(receiver)
+
+		if (isActive) {
+			onGranted()
+			return yes
+		}
+		
+		val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+			putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, receiver)
+			putExtra(
+				DevicePolicyManager.EXTRA_ADD_EXPLANATION,
+				"Enable to protect app and prevent removal during focus mode"
+			)
+		}
+
+		val canResolve = intent.resolveActivity(App.packageManager) != null
+
+		if (!canResolve) {
+			Vlog("FAILED: no handler")
+			return no
+		}
+
+		return try {
+			AppActivity.it?.startActivityForResult(intent, 1)
+			yes
+		} catch (e: Exception) {
+			log("ERROR: ${e.message}")
+			no
+		}
+	}
+
+
+	
+	private fun perm(pkg: Str, permission: Str) =
+		App.packageManager.checkPermission(permission, pkg) ==
+		    PackageManager.PERMISSION_GRANTED
+		
+	private fun op(pkg: Str, name: Str): Bool {
+		val info = App.packageManager.getApplicationInfo(pkg, 0)
+		return App.getSystemService(AppOpsManager::class.java)
+			.unsafeCheckOpNoThrow(name, info.uid, pkg) ==
+			    AppOpsManager.MODE_ALLOWED
+	}
+	
+	fun hasOverlay(pkg: Str) = op(pkg, AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW)
+	fun hasUsage(pkg: Str) = op(pkg, AppOpsManager.OPSTR_GET_USAGE_STATS)
+	fun hasNotification(pkg: Str) = op(pkg, "android:post_notification")
+
+	fun hasCamera(pkg: Str) = perm(pkg, Manifest.permission.CAMERA)
+	fun hasMic(pkg: Str) = perm(pkg, Manifest.permission.RECORD_AUDIO)
+	fun hasLocation(pkg: Str) = perm(pkg, Manifest.permission.ACCESS_FINE_LOCATION)
+	fun hasContacts(pkg: Str) = perm(pkg, Manifest.permission.READ_CONTACTS)
+	fun hasStorage(pkg: Str) = perm(pkg, Manifest.permission.READ_EXTERNAL_STORAGE)
+	fun hasPhone(pkg: Str) = perm(pkg, Manifest.permission.READ_PHONE_STATE)
+	fun hasSms(pkg: Str) = perm(pkg, Manifest.permission.READ_SMS)
+	fun hasCalendar(pkg: String) = perm(pkg, Manifest.permission.READ_CALENDAR)
+	fun hasBluetooth(pkg: Str) = perm(pkg, Manifest.permission.BLUETOOTH_CONNECT)
+
+	fun hasAccessibility(pkg: Str): Bool {
+		val am = App.getSystemService(AccessibilityManager::class.java)
+
+		return am.getEnabledAccessibilityServiceList(
+			AccessibilityServiceInfo.FEEDBACK_ALL_MASK
+		).any {
+			it.resolveInfo.serviceInfo.packageName == pkg
+		}
+	}
+
+	
+}
+
+@Suppress("DEPRECATION")
+fun GotInternet(): Bool {
+    val connectivityManager = App.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+    val isConnected = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val network = connectivityManager.activeNetwork
+        val activeNetwork = network?.let { connectivityManager.getNetworkCapabilities(it) }
+        activeNetwork?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == yes ||
+                activeNetwork?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == yes
+    } else {
+        val networkInfo = connectivityManager.activeNetworkInfo
+        networkInfo?.isConnected == yes
+    }
+
+    if (!isConnected) Vlog("No internet")
+    return isConnected
+}
+
+
+/*
+	@Composable
+fun AccessibilityPermission() {
+    val context = LocalContext.current
+    val serviceId = "${context.packageName}/${WatchdogAccessibilityService::class.java.name}"
+
+    val enabledServices = Settings.Secure.getString(
+        context.contentResolver,
+        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+    ) ?: ""
+
+    val isEnabled = enabledServices.contains(serviceId)
+
+    log("Service id AccessibilityPermission${serviceId} ", "bad")
+    log("isEnabled? AccessibilityPermission${isEnabled} ", "bad")
+    if (!isEnabled) {
+            //!Bar.AccesabilityPermission = false
+            AlertDialog.Builder(context)
+                .setTitle("Permission Needed")
+                .setMessage("Please enable accessibility for full features.")
+                .setPositiveButton("ok") { _, _ ->
+                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                }
+                .show()
+    } else {
+        //!Bar.AccesabilityPermission = true
+    }
+}
+*/
+
+
+
+fun isBatteryOptimizationDisabled(): Bool {
+    val pm = App.getSystemService(PowerManager::class.java)
+    return pm.isIgnoringBatteryOptimizations(AppPkg)
+}
+
+fun isUsageP_Enabled(): Bool {
+	val appOps = App.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+    return appOps.checkOpNoThrow(
+		AppOpsManager.OPSTR_GET_USAGE_STATS,
+        Process.myUid(),
+        AppPkg,
+    ) == AppOpsManager.MODE_ALLOWED
+}
+
+// ✴️NOT WHAT YOU THINK FUNCTION, IGNORE
+fun isNotificationEnabled(): Bool {
+     return NotificationManagerCompat
+        .getEnabledListenerPackages(App)
+        .contains(AppPkg)
+}
+
+
+
+
+fun Android8OrAbove(Do: Do) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Do()
+    }
+}
+
+
+
+
+
+
+
+
+
+
+/*
+
+
+
+/*?WHEN TESTING IS PAINFUL
+* !AUTO DISABLED EACH TIME*/
+/* IT AUTO CALLS ITSELF
+YEA, WEIRD ONLY FEW FUNCTIONS IT CALLS
+? YOU MUST WORK WITH IT WANT AND SET UP
+! onAccessibilityEvent- IS A MUST AND ONLY ON CHANGE CALLED
+* */
+class WatchdogAccessibilityService  : AccessibilityService() {
+
+    /* ON CHANGE DO X
+    ! this is very important
+    ? must be names onAccessibilityEvent
+
+    * */
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        CurrentApp(event)
+        //GETEVERYTHING(event)
+    }
+    fun CurrentApp(event: AccessibilityEvent?) {
+        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            Bar.currentApp = event.packageName.toString()
+            log("CURRENT APP: ${Bar.currentApp}", "bad")
+        }
+    }
+    private fun exploreNodeTree(node: AccessibilityNodeInfo?, depth: Int) {
+        if (node == null) return
+
+        val indent = "  ".repeat(depth)
+
+        val text = node.text
+        val id = node.viewIdResourceName
+        val desc = node.contentDescription
+        val className = node.className
+        val clickable = node.isClickable
+        val enabled = node.isEnabled
+        val focused = node.isFocused
+        val focusable = node.isFocusable
+        val visible = node.isVisibleToUser
+        val bounds = Rect().apply { node.getBoundsInScreen(this) }
+
+        // Header
+        log("$indent Node:", "bad")
+
+        // Properties
+        if (!text.isNullOrEmpty()) log("$indent   Text: $text", "bad")
+        if (!desc.isNullOrEmpty()) log("$indent   Description: $desc", "bad")
+        if (!id.isNullOrEmpty()) log("$indent   ID: $id", "bad")
+        log("$indent   Class: $className", "bad")
+        log("$indent   Clickable: $clickable", "bad")
+        log("$indent   Enabled: $enabled", "bad")
+        log("$indent   Focused: $focused", "bad")
+        log("$indent   Focusable: $focusable", "bad")
+        log("$indent   Visible: $visible", "bad")
+        log("$indent   Bounds: $bounds", "bad")
+
+        // Children
+        for (i in 0 until node.childCount) {
+            exploreNodeTree(node.getChild(i), depth + 1)
+        }
+    }
+
+    fun GETEVERYTHING(event: AccessibilityEvent?) {
+        val root = rootInActiveWindow
+        if (root != null) {
+            exploreNodeTree(root, 0)
+        }
+    }
+    override fun onInterrupt() {
+        log("ACESABILITY Service interrupted.", "bad")
+    }
+}
+
+class NotificationHelper(private val context: Context) {
+    companion object {
+        private const val CHANNEL_ID = "WatchdogServiceChannel"
+    }
+    fun createNotificationChannel() {
+        Timber.d("createNotificationChannel() called")
+        val channel =
+            NotificationChannel(
+                CHANNEL_ID,
+                context.getString(R.string.notification_channel_name_watchdog_service),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            )
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        manager.createNotificationChannel(channel)
+    }
+
+    fun buildNotification(): Notification {
+        Timber.d("buildNotification() called")
+
+        val notificationIntent = Intent(context, MainActivity::class.java)
+        val pendingIntentFlags =
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        val pendingIntent =
+            PendingIntent.getActivity(context, 0, notificationIntent, pendingIntentFlags)
+
+        return NotificationCompat.Builder(context, CHANNEL_ID)
+            .setContentTitle(context.getString(R.string.notification_title_app_watchdog))
+            .setContentText(context.getString(R.string.notification_content_monitoring_apps))
+            .setSmallIcon(R.drawable.baseline_radar_24)
+            .setContentIntent(pendingIntent)
+            // Low priority for ongoing background service notification
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            // Makes the notification persistent
+            .setOngoing(true)
+            .build()
+    }
+}
+
+
+*/
+
+
+
+
+
+

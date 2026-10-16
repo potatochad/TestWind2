@@ -1,5 +1,3 @@
-import java.util.Properties
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -9,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.productivity.testwind"
+    namespace = "com.productivity.testwind2"
 
     compileSdk = 36
 

@@ -1,0 +1,250 @@
+package com.productivity.testwind2.Screens.Settings
+
+import com.productivity.testwind2.Imports.Utils.Log.*
+import com.productivity.testwind2.Imports.Utils.Renames.*
+import com.productivity.testwind2.Imports.Utils.SaveData.*
+import com.productivity.testwind2.Imports.Utils.AppsAndDevice.*
+import com.productivity.testwind2.Imports.Utils.NavControl.*
+import com.productivity.testwind2.Screens.*
+import com.productivity.testwind2.Imports.Utils.String.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.*
+import com.productivity.testwind2.*
+import com.productivity.testwind2.Imports.Utils.*
+import androidx.compose.ui.unit.*
+import androidx.compose.foundation.lazy.*
+import com.productivity.testwind2.Imports.UI_visible.*
+import com.productivity.testwind2.Imports.Utils.Log.logTimer
+
+@Composable
+fun SettingsScreen() {
+    LazyScreen("Settings") {
+        AppItem.UnlockThreshold()
+		LazyItem(
+			icon = { BigIcon.Lock(gold) },
+			title = "Block Uninstall",
+			onClick = {
+				if (!Permission.deviceAdmin{
+					Bar.noUninstall = yes
+				}){
+					Bar.noUninstall = no
+					Vlog("Need Permission")
+				}
+			},
+			endUI = {
+				Text(if (Bar.noUninstall) "ON".gold() else "OFF".darkGray())
+			},
+			topPadding = 1.dp,
+		)
+
+		/*
+		‼️‼️SAVE AND RESTORE DONT WORKKKK
+        var restore = r(no)
+        LazyItem(
+            icon = { BigIcon.Restore(darkBlue) },
+            title = "Restore",
+            onClick = { 
+                restore.it = yes
+            },
+            bottomPadding = 2.dp
+        )
+	    Restore(restore)
+		
+
+        var backup = r(no)
+        LazyItem(
+            topPadding = 1.dp,
+            icon = { BigIcon.Backup(darkBlue) },
+            title = "Backup",
+			endUI = {
+				Ctext(
+					if (Bar.encryptedBackup) "encrypt".darkGray()
+					else "txt".darkGray()
+				) {
+					Bar.encryptedBackup = !Bar.encryptedBackup
+				}
+			},
+            onClick = { 
+                backup.it = yes
+            },
+        )
+        Backup(backup)
+		*/
+
+
+    
+
+        LazyItem(
+                icon = { BigIcon.Extension(0xFF9C27B0) },
+                title = "Extension",
+                onClick = {
+                    goTo("ExtensionsScreen")
+                }
+        ) 
+		LazyItem(
+            icon = { BigIcon.Lock(gold) },
+            title = "Grayscale",
+            onClick = {
+                goTo("GrayScaleScreen")
+            }
+        ) 
+		
+
+		
+        LazyItem(
+                icon = { BigIcon.VisibilityOff(0xFF03A9F4) },
+                title = "Privacy",
+                onClick = {
+                    goTo("PrivacyScreen")
+                }
+        ) 
+        LazyItem(
+                icon = { BigIcon.Tune(0xFFB0BEC5) },
+                title = "Other",
+                onClick = { goTo("SettingsOtherScreen") }
+        ) 
+	
+    }
+}
+
+@Composable()
+fun PrivacyScreen() = LazyScreen("Privacy") {
+   RuleCard("If") {
+      var check = mState(Bar.privacyLocation)
+	  var show = mState(no)
+	  
+
+	  PickLocation(show)
+	  
+      CheckRow("Activate at ", check) {
+         Ctext("${Bar.privacyGeo.size} locations") {
+			check.it = yes
+			location {
+				show.it = yes
+				Bar.privacyLocation = yes
+		    }
+		 }
+      } 
+
+
+
+	  
+   }
+}
+
+
+@Composable
+fun ExtensionsScreen() = LazyScreen("Extensions") {
+	
+	// App.start(AppBackground::class.java)
+	
+	
+	LazzyColumn {
+        LazzyRow {
+            Btn("Add"){
+                Bar.items += TestData()
+            }
+			Btn("Add 10"){
+				val timer = logTimer("Bar.items size: ${Bar.items.size}")
+				repeat(10) {
+					Bar.items += TestData()
+				}
+                timer.stop()
+			   
+			}
+            Btn("Delete"){
+                    if (Bar.items.notEmpty) {
+                        Bar.items.removeAt(0)
+                    }
+                }
+            Btn("Edit"){
+                    if (Bar.items.notEmpty) {
+                        Bar.items[0].name = "updated ${TimeMillis()}"
+                    }
+                }
+		}
+		LazzyRow {
+            Btn("Edit All"){
+                    Bar.items.each { index, item -> 
+						item.name = "updated ${TimeMillis()}"
+					}
+                }
+		}
+
+        LazzyColumn(Mod.h(300)) {
+            LazyColumn {
+                items(
+                    items = Bar.items.it,
+                    key = { it.id }
+                ) {
+                    Text(it.name)
+                }
+            }
+        }
+    }
+	
+}
+
+
+
+
+@Composable
+fun GrayScaleScreen() = LazyScreen("GrayScale") {
+	EmptyBox(
+		text = "GrayScale",
+		icon = Icons.Default.Palette,
+		color = gold,
+	)
+	
+	LazySlider(
+		min = 0f,
+		max = 1f,
+		linear = yes,
+		value = mState(0f),
+	){
+		DeviceGray(it)
+	}
+
+	
+}
+        
+
+@Composable
+fun SettingsOtherScreen() = LazyScreen("Settings") {
+        LazyItem(
+            icon = { BigIcon.ListAlt(0xFF90A4AE) },
+            title = "Logs",
+            onClick = { goTo("LogsScreen") }
+        )
+		LazyItem(
+            icon = { Icon.Whatshot() },
+            title = "Burn 5 points",
+            onClick = {
+				Bar.funTime -= 5
+				Bar.funTime.vlog("Points left")
+			}
+        )
+		LazyItem(
+            icon = { Icon.Whatshot() },
+            title = "Delete logs",
+            onClick = {
+				Vlog("Logs are cleared!")
+				Bar.logs.clear()
+			}
+        )
+		
+		var showDeleteSure = r(no)
+		IsSure(showDeleteSure) {
+            AppData.deleteAll()
+			CloseMyApp()
+		}
+		LazyItem(
+            icon = { Icon.Whatshot() },
+            title = "‼️ DELETE ALL DATA",
+            onClick = {
+				showDeleteSure.it = yes
+			}
+        )
+}

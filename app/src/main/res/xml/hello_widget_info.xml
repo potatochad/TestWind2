@@ -11,7 +11,7 @@
 
     android:resizeMode="none"
 
-    android:configure="com.productivity.testwind.Widget.HelloWidget"
+    android:configure="com.productivity.testwind2.Widget.HelloWidget"
     android:widgetFeatures="configuration_optional|reconfigurable"
     android:initialLayout="@layout/glance_default_loading_layout" 
 />
